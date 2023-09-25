@@ -199,6 +199,6 @@ unsafe def main (args : List String) : IO UInt32 := do
     | [mod] => match Syntax.decodeNameLit s!"`{mod}" with
       | some m => pure m
       | none => throw <| IO.userError s!"Could not resolve module: {mod}"
-    | _ => throw <| IO.userError "Usage: lake exe verify Mathlib.Data.Nat.Basic"
+    | _ => throw <| IO.userError "Usage: lake exe redeclare Mathlib.Data.Nat.Basic"
   replay module
   return 0
