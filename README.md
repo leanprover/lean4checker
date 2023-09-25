@@ -24,6 +24,13 @@ cd ..
 grep '^import Mathlib.' Mathlib.lean | sed 's/import //' | parallel --halt now,fail=1 'lake env lean4checker/build/bin/lean4checker {}'
 ```
 
+## Caveats
+
+Despite `.olean` files being "fairly cross-platform",
+`lean4checker` will reject `.olean`s that were compiled on a system
+that  does not use the same bignum library as your system,
+so it advisable to not rely on cached `.olean`s.
+
 ## Variants
 
 It would be easy to adapt this code to replay the entire environment up to some set of declarations,
