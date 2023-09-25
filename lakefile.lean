@@ -1,16 +1,12 @@
 import Lake
 open Lake DSL
 
-package «redeclare» {
-  -- add package configuration options here
-}
+package «lean4checker» { }
 
 @[default_target]
-lean_lib «Redeclare» {
-  -- add library configuration options here
-}
+lean_lib «Lean4Checker» { }
 
 @[default_target]
-lean_exe «redeclare» {
+lean_exe «lean4checker» {
   root := `Main
 }

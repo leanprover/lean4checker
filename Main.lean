@@ -3,64 +3,10 @@ Copyright (c) 2023 Scott Morrison. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Scott Morrison
 -/
-import Lean.Util.FoldConsts
 import Lean.CoreM
-import Lean.Elab.Term -- Only used for `compile_time_search_path%`
+import Lean4Checker.Lean
 
 open Lean
-
-namespace Lean
-
-namespace NameSet
-
-/-- The union of two `NameSet`s. -/
-def append (s t : NameSet) : NameSet :=
-  s.mergeBy (fun _ _ _ => .unit) t
-
-instance : Append NameSet where
-  append := NameSet.append
-
-def ofList (names : List Name) : NameSet :=
-  names.foldl (fun s n => s.insert n) {}
-
-end NameSet
-
-def HashMap.keyNameSet (m : HashMap Name α) : NameSet :=
-  m.fold (fun s n _ => s.insert n) {}
-
-/-- Like `Expr.getUsedConstants`, but produce a `NameSet`. -/
-def Expr.getUsedConstants' (e : Expr) : NameSet :=
-  e.foldConsts {} fun c cs => cs.insert c
-
-namespace ConstantInfo
-
-/-- Return all names appearing in the type or value of a `ConstantInfo`. -/
-def getUsedConstants (c : ConstantInfo) : NameSet :=
-  c.type.getUsedConstants' ++ match c.value? with
-  | some v => v.getUsedConstants'
-  | none => match c with
-    | .inductInfo val => .ofList val.ctors
-    | .opaqueInfo val => val.value.getUsedConstants'
-    | _ => {}
-
-def inductiveVal! : ConstantInfo → InductiveVal
-  | .inductInfo val => val
-  | _ => panic! "Expected a `ConstantInfo.inductInfo`."
-
-end ConstantInfo
-
-namespace Environment
-
-def importsOf (env : Environment) (n : Name) : Array Import :=
-  if n = env.header.mainModule then
-    env.header.imports
-  else match env.getModuleIdx? n with
-    | .some idx => env.header.moduleData[idx.toNat]!.imports
-    | .none => #[]
-
-end Environment
-
-end Lean
 
 structure Context where
   newConstants : HashMap Name ConstantInfo
@@ -183,16 +129,8 @@ unsafe def replay (module : Name) : IO Unit := do
       for (n, _) in newConstants do
         replayConstant n
 
-open System in
-instance : ToExpr FilePath where
-  toTypeExpr := mkConst ``FilePath
-  toExpr path := mkApp (mkConst ``FilePath.mk) (toExpr path.1)
-
-elab "compile_time_search_path%" : term =>
-  return toExpr (← searchPathRef.get)
-
 /--
-Run as e.g. `lake exe redeclare Mathlib.Data.Nat.Basic`.
+Run as e.g. `lake exe lean4checker Mathlib.Data.Nat.Basic`.
 
 This will replay all the new declarations from this file into the `Environment`
 as it was at the beginning of the file, using the kernel to check them.
@@ -200,11 +138,11 @@ as it was at the beginning of the file, using the kernel to check them.
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
 unsafe def main (args : List String) : IO UInt32 := do
-  searchPathRef.set compile_time_search_path%
+  initSearchPath (← findSysroot)
   let module ← match args with
     | [mod] => match Syntax.decodeNameLit s!"`{mod}" with
       | some m => pure m
       | none => throw <| IO.userError s!"Could not resolve module: {mod}"
-    | _ => throw <| IO.userError "Usage: lake exe redeclare Mathlib.Data.Nat.Basic"
+    | _ => throw <| IO.userError "Usage: lake exe lean4checker Mathlib.Data.Nat.Basic"
   replay module
   return 0
