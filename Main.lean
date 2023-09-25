@@ -135,14 +135,17 @@ partial def replayConstant (name : Name) : M Unit := do
         for o in all do
           modify fun s =>
             { s with remaining := s.remaining.erase o.name, pending := s.pending.erase o.name }
-        let types : List InductiveType ← all.mapM fun ci => do
-          let ctors ← ci.inductiveVal!.ctors.mapM fun n => do
-            let ctorInfo := ((← read).newConstants.find! n)
-            pure { name := ctorInfo.name, type := ctorInfo.type }
-          pure <|
+        let ctorInfo ← all.mapM fun ci => do
+          pure (ci, ← ci.inductiveVal!.ctors.mapM fun n => do
+            pure ((← read).newConstants.find! n))
+        -- Make sure we are really finished with the constructors.
+        for (_, ctors) in ctorInfo do
+          for ctor in ctors do
+            replayConstants ctor.getUsedConstants
+        let types : List InductiveType := ctorInfo.map fun ⟨ci, ctors⟩ =>
           { name := ci.name
             type := ci.type
-            ctors := ctors }
+            ctors := ctors.map fun ci => { name := ci.name, type := ci.type } }
         addDecl (Declaration.inductDecl lparams nparams types false)
       -- We discard `ctorInfo` and `recInfo` constants. These are added when generating inductives.
       | .ctorInfo _ =>
