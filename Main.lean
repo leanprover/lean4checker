@@ -40,6 +40,7 @@ def getUsedConstants (c : ConstantInfo) : NameSet :=
   | some v => v.getUsedConstants'
   | none => match c with
     | .inductInfo val => .ofList val.ctors
+    | .opaqueInfo val => val.value.getUsedConstants'
     | _ => {}
 
 def inductiveVal! : ConstantInfo → InductiveVal
@@ -144,8 +145,10 @@ partial def replayConstant (name : Name) : M Unit := do
             ctors := ctors }
         addDecl (Declaration.inductDecl lparams nparams types false)
       -- We discard `ctorInfo` and `recInfo` constants. These are added when generating inductives.
-      | .ctorInfo _ => pure ()
-      | .recInfo _ =>  pure ()
+      | .ctorInfo _ =>
+        IO.println s!"Skipping constructor {name}"
+      | .recInfo _ =>
+        IO.println s!"Skipping recursor {name}"
       | .quotInfo _ =>
         IO.println s!"Replaying quotient {name}"
         addDecl (Declaration.quotDecl)
