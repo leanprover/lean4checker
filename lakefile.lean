@@ -9,4 +9,5 @@ lean_lib «Lean4Checker» { }
 @[default_target]
 lean_exe «lean4checker» {
   root := `Main
+  supportInterpreter := true
 }

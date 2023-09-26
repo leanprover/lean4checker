@@ -16,12 +16,7 @@ structure State where
   remaining : NameSet := {}
   pending : NameSet := {}
 
-abbrev M := ReaderT Context <| StateT State IO
-
-def M.run (env : Environment) (newConstants : HashMap Name ConstantInfo) (act : M α) : IO α :=
-  StateT.run' (s := { env, remaining := newConstants.keyNameSet }) do
-    ReaderT.run (r := { newConstants }) do
-      act
+abbrev M := ReaderT Context <| StateRefT State IO
 
 /-- Check if a `Name` still needs processing. If so, move it from `remaining` to `pending`. -/
 def isTodo (name : Name) : M Bool := do
@@ -109,24 +104,25 @@ partial def replayConstants (names : NameSet) : M Unit := do
 
 end
 
-/--
-Given a module, obtain the environments
-* `before`, by importing all its imports but not processing the contents of the module
-* `after`, by importing the module
-and then run a function `act before after`.
--/
-unsafe def diffEnvironments (module : Name) (act : Environment → Environment → IO α) : IO α := do
-  Lean.withImportModules #[{module}] {} 0 fun after => do
-    Lean.withImportModules (after.importsOf module) {} 0 fun before =>
-      act before after
-
-unsafe def replay (module : Name) : IO Unit := do
-  diffEnvironments module fun before after => do
-    let newConstants := after.constants.map₁.toList.filter
-      -- We skip unsafe constants, and also partial constants. Later we may want to handle partial constants.
-      fun ⟨n, ci⟩ => !before.constants.map₁.contains n && !ci.isUnsafe && !ci.isPartial
-    M.run before (HashMap.ofList newConstants) do
-      for (n, _) in newConstants do
+def replay (module : Name) : IO Unit := do
+  let mFile ← findOLean module
+  unless (← mFile.pathExists) do
+    throw <| IO.userError s!"object file '{mFile}' of module {module} does not exist"
+  let (mod, _) ← readModuleData mFile
+  let (_, s) ← importModulesCore mod.imports
+    |>.run (s := { moduleNameSet := ({} : NameHashSet).insert module })
+  let env ← finalizeImport s #[{module}] {} 0
+  let mut remaining := {}
+  let mut newConstants := {}
+  for name in mod.constNames, ci in mod.constants do
+    -- We skip unsafe constants, and also partial constants.
+    -- Later we may want to handle partial constants.
+    if !ci.isUnsafe && !ci.isPartial then
+      newConstants := newConstants.insert name ci
+      remaining := remaining.insert name
+  StateRefT'.run' (s := { env, remaining }) do
+    ReaderT.run (r := { newConstants }) do
+      for n in mod.constNames do
         replayConstant n
 
 /--
@@ -140,9 +136,9 @@ This is not an external verifier, simply a tool to detect "environment hacking".
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   let module ← match args with
-    | [mod] => match Syntax.decodeNameLit s!"`{mod}" with
-      | some m => pure m
-      | none => throw <| IO.userError s!"Could not resolve module: {mod}"
+    | [mod] => match mod.toName with
+      | .anonymous => throw <| IO.userError s!"Could not resolve module: {mod}"
+      | m => pure m
     | _ => throw <| IO.userError "Usage: lake exe lean4checker Mathlib.Data.Nat.Basic"
   replay module
   return 0
