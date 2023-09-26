@@ -43,6 +43,7 @@ def getUsedConstants (c : ConstantInfo) : NameSet :=
   | none => match c with
     | .inductInfo val => .ofList val.ctors
     | .opaqueInfo val => val.value.getUsedConstants'
+    | .ctorInfo val => ({} : NameSet).insert val.name
     | _ => {}
 
 def inductiveVal! : ConstantInfo → InductiveVal

@@ -15,6 +15,8 @@ structure State where
   env : Environment
   remaining : NameSet := {}
   pending : NameSet := {}
+  postponedConstructors : NameSet := {}
+  postponedRecursors : NameSet := {}
 
 abbrev M := ReaderT Context <| StateRefT State IO
 
@@ -38,6 +40,11 @@ def addDecl (d : Declaration) : M Unit := do
   match (← get).env.addDecl d with
   | .ok env => modify fun s => { s with env := env }
   | .error ex => throwKernelException ex
+
+deriving instance BEq for ConstantVal
+deriving instance BEq for ConstructorVal
+deriving instance BEq for RecursorRule
+deriving instance BEq for RecursorVal
 
 mutual
 /--
@@ -83,11 +90,14 @@ partial def replayConstant (name : Name) : M Unit := do
             type := ci.type
             ctors := ctors.map fun ci => { name := ci.name, type := ci.type } }
         addDecl (Declaration.inductDecl lparams nparams types false)
-      -- We discard `ctorInfo` and `recInfo` constants. These are added when generating inductives.
-      | .ctorInfo _ =>
-        pure ()
-      | .recInfo _ =>
-        pure ()
+      -- We postpone checking constructors,
+      -- and at the end make sure they are identical
+      -- to the constructors generated when we replay the inductives.
+      | .ctorInfo info =>
+        modify fun s => { s with postponedConstructors := s.postponedConstructors.insert info.name }
+      -- Similarly we postpone checking recursors.
+      | .recInfo info =>
+        modify fun s => { s with postponedRecursors := s.postponedRecursors.insert info.name }
       | .quotInfo _ =>
         addDecl (Declaration.quotDecl)
       modify fun s => { s with pending := s.pending.erase name }
@@ -98,7 +108,22 @@ partial def replayConstants (names : NameSet) : M Unit := do
 
 end
 
-unsafe def replay (module : Name) : IO Unit := do
+def checkPostponedConstructors : M Unit := do
+  for ctor in (← get).postponedConstructors do
+    match (← get).env.constants.find? ctor, (← read).newConstants.find? ctor with
+    | some (.ctorInfo info), some (.ctorInfo info') =>
+      if ! (info == info') then throw <| IO.userError s!"Invalid constructor {ctor}"
+    | _, _ => throw <| IO.userError s!"No such constructor {ctor}"
+
+def checkPostponedRecursors : M Unit := do
+  for ctor in (← get).postponedRecursors do
+    match (← get).env.constants.find? ctor, (← read).newConstants.find? ctor with
+    | some (.recInfo info), some (.recInfo info') =>
+      if ! (info == info') then throw <| IO.userError s!"Invalid recursor {ctor}"
+    | _, _ => throw <| IO.userError s!"No such recursor {ctor}"
+
+
+unsafe def replayFromImports (module : Name) : IO Unit := do
   let mFile ← findOLean module
   unless (← mFile.pathExists) do
     throw <| IO.userError s!"object file '{mFile}' of module {module} does not exist"
@@ -118,8 +143,26 @@ unsafe def replay (module : Name) : IO Unit := do
     ReaderT.run (r := { newConstants }) do
       for n in mod.constNames do
         replayConstant n
+      checkPostponedConstructors
+      checkPostponedRecursors
   s.env.freeRegions
   region.free
+
+unsafe def replayFromFresh (module : Name) : IO Unit := do
+  Lean.withImportModules #[{module}] {} 0 fun env => do
+    let fresh ← mkEmptyEnvironment
+    let mut remaining : NameSet := {}
+    for (n, ci) in env.constants.map₁.toList do
+      -- We skip unsafe constants, and also partial constants.
+      -- Later we may want to handle partial constants.
+      if !ci.isUnsafe && !ci.isPartial then
+        remaining := remaining.insert n
+    discard <| StateRefT'.run (s := { env := fresh, remaining }) do
+      ReaderT.run (r := { newConstants := env.constants.map₁ }) do
+        for n in remaining do
+          replayConstant n
+        checkPostponedConstructors
+        checkPostponedRecursors
 
 /--
 Run as e.g. `lake exe lean4checker` to check everything on the Lean search path,
@@ -128,22 +171,31 @@ or `lake exe lean4checker Mathlib.Data.Nat.Basic` to check a single file.
 This will replay all the new declarations from the target file into the `Environment`
 as it was at the beginning of the file, using the kernel to check them.
 
+You can also use `lake exe lean4checker --fresh Mathlib.Data.Nat.Basic` to replay all the constants
+(both imported and defined in that file) into a fresh environment.
+
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
-  match args with
-    | [mod] => match mod.toName with
+  let (flags, args) := args.partition fun s => s.startsWith "--"
+  match flags, args with
+    | flags, [mod] => match mod.toName with
       | .anonymous => throw <| IO.userError s!"Could not resolve module: {mod}"
-      | m => replay m
-    | _ => do
+      | m =>
+        if "--fresh" ∈ flags then
+          replayFromFresh m
+        else
+          replayFromImports m
+    | [], _ => do
       let sp ← searchPathRef.get
       let mut tasks := #[]
       for path in (← SearchPath.findAllWithExt sp "olean") do
         if let some m := (← searchModuleNameOfFileName path sp) then
-          tasks := tasks.push (m, ← IO.asTask (replay m))
+          tasks := tasks.push (m, ← IO.asTask (replayFromImports m))
       for (m, t) in tasks do
         if let .error e := t.get then
-          IO.println s!"lean4checker found a problem in {m}"
+          IO.eprintln s!"lean4checker found a problem in {m}"
           throw e
+    | _, _ => throw <| IO.userError "--fresh flag is only valid when specifying a single module"
   return 0

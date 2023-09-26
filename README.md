@@ -7,6 +7,9 @@ ensuring that the kernel accepts all declarations.
 `lake exe lean4checker` without an argument will run `lean4checker` in parallel on every `.olean`
 file on the search path (note that this include Lean 4 and all dependencies of your project).
 
+You can also use `lake exe lean4checker --fresh Mathlib.Data.Nat.Basic` to replay all the constants
+(both imported and defined in that file) into a fresh environment.
+
 This is not an external verifier, as it uses the Lean kernel itself.
 However it is useful as a tool to detect "environment hacking",
 i.e. using metaprogramming facilities to build an inconsistent Lean `Environment`.
