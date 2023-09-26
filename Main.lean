@@ -57,19 +57,14 @@ partial def replayConstant (name : Name) : M Unit := do
     if (← get).pending.contains name then
       match ci with
       | .defnInfo   info =>
-        IO.println s!"Replaying defn {name}"
         addDecl (Declaration.defnDecl   info)
       | .thmInfo    info =>
-        IO.println s!"Replaying thm {name}"
         addDecl (Declaration.thmDecl    info)
       | .axiomInfo  info =>
-        IO.println s!"Replaying axiom {name}"
         addDecl (Declaration.axiomDecl  info)
       | .opaqueInfo info =>
-        IO.println s!"Replaying opaque {name}"
         addDecl (Declaration.opaqueDecl info)
       | .inductInfo info =>
-        IO.println s!"Replaying inductive {name}"
         let lparams := info.levelParams
         let nparams := info.numParams
         let all ← info.all.mapM fun n => do pure <| ((← read).newConstants.find! n)
@@ -90,11 +85,10 @@ partial def replayConstant (name : Name) : M Unit := do
         addDecl (Declaration.inductDecl lparams nparams types false)
       -- We discard `ctorInfo` and `recInfo` constants. These are added when generating inductives.
       | .ctorInfo _ =>
-        IO.println s!"Skipping constructor {name}"
+        pure ()
       | .recInfo _ =>
-        IO.println s!"Skipping recursor {name}"
+        pure ()
       | .quotInfo _ =>
-        IO.println s!"Replaying quotient {name}"
         addDecl (Declaration.quotDecl)
       modify fun s => { s with pending := s.pending.erase name }
 
@@ -126,19 +120,28 @@ def replay (module : Name) : IO Unit := do
         replayConstant n
 
 /--
-Run as e.g. `lake exe lean4checker Mathlib.Data.Nat.Basic`.
+Run as e.g. `lake exe lean4checker` to check everything on the Lean search path,
+or `lake exe lean4checker Mathlib.Data.Nat.Basic` to check a single file.
 
-This will replay all the new declarations from this file into the `Environment`
+This will replay all the new declarations from the target file into the `Environment`
 as it was at the beginning of the file, using the kernel to check them.
 
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
-  let module ← match args with
+  match args with
     | [mod] => match mod.toName with
       | .anonymous => throw <| IO.userError s!"Could not resolve module: {mod}"
-      | m => pure m
-    | _ => throw <| IO.userError "Usage: lake exe lean4checker Mathlib.Data.Nat.Basic"
-  replay module
+      | m => replay m
+    | _ => do
+      let sp ← searchPathRef.get
+      let mut tasks := #[]
+      for path in (← SearchPath.findAllWithExt sp "olean") do
+        if let some m := (← searchModuleNameOfFileName path sp) then
+          tasks := tasks.push (m, ← IO.asTask (replay m))
+      for (m, t) in tasks do
+        if let .error e := t.get then
+          IO.println s!"lean4checker found a problem in {m}"
+          throw e
   return 0

@@ -4,25 +4,25 @@
 starting from the environment provided by its imports,
 ensuring that the kernel accepts all declarations.
 
+`lake exe lean4checker` without an argument will run `lean4checker` in parallel on every `.olean`
+file on the search path (note that this include Lean 4 and all dependencies of your project).
+
 This is not an external verifier, as it uses the Lean kernel itself.
 However it is useful as a tool to detect "environment hacking",
 i.e. using metaprogramming facilities to build an inconsistent Lean `Environment`.
 
 ## Usage
 
-To run this in another Lean project, use for example:
+To run this in another Lean project, use:
+```
+lake env path/to/lean4checker
+```
+or
 ```
 lake env path/to/lean4checker Mathlib.Data.Nat.Basic
 ```
+to check a single file.
 
-In Mathlib CI we run `lean4checker` in parallel over every file, using:
-```
-git clone https://github.com/leanprover/lean4checker
-cd lean4checker
-lake build
-cd ..
-grep '^import Mathlib.' Mathlib.lean | sed 's/import //' | parallel --halt now,fail=1 'lake env lean4checker/build/bin/lean4checker {}'
-```
 
 ## Caveats
 
