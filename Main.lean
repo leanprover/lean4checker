@@ -98,11 +98,11 @@ partial def replayConstants (names : NameSet) : M Unit := do
 
 end
 
-def replay (module : Name) : IO Unit := do
+unsafe def replay (module : Name) : IO Unit := do
   let mFile ← findOLean module
   unless (← mFile.pathExists) do
     throw <| IO.userError s!"object file '{mFile}' of module {module} does not exist"
-  let (mod, _) ← readModuleData mFile
+  let (mod, region) ← readModuleData mFile
   let (_, s) ← importModulesCore mod.imports
     |>.run (s := { moduleNameSet := ({} : NameHashSet).insert module })
   let env ← finalizeImport s #[{module}] {} 0
@@ -114,10 +114,12 @@ def replay (module : Name) : IO Unit := do
     if !ci.isUnsafe && !ci.isPartial then
       newConstants := newConstants.insert name ci
       remaining := remaining.insert name
-  StateRefT'.run' (s := { env, remaining }) do
+  let (_, s) ← StateRefT'.run (s := { env, remaining }) do
     ReaderT.run (r := { newConstants }) do
       for n in mod.constNames do
         replayConstant n
+  s.env.freeRegions
+  region.free
 
 /--
 Run as e.g. `lake exe lean4checker` to check everything on the Lean search path,
