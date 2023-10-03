@@ -108,6 +108,10 @@ partial def replayConstants (names : NameSet) : M Unit := do
 
 end
 
+/--
+Check that all postponed constructors are identical to those generated
+when we replayed the inductives.
+-/
 def checkPostponedConstructors : M Unit := do
   for ctor in (← get).postponedConstructors do
     match (← get).env.constants.find? ctor, (← read).newConstants.find? ctor with
@@ -115,6 +119,10 @@ def checkPostponedConstructors : M Unit := do
       if ! (info == info') then throw <| IO.userError s!"Invalid constructor {ctor}"
     | _, _ => throw <| IO.userError s!"No such constructor {ctor}"
 
+/--
+Check that all postponed recursors are identical to those generated
+when we replayed the inductives.
+-/
 def checkPostponedRecursors : M Unit := do
   for ctor in (← get).postponedRecursors do
     match (← get).env.constants.find? ctor, (← read).newConstants.find? ctor with
@@ -122,6 +130,21 @@ def checkPostponedRecursors : M Unit := do
       if ! (info == info') then throw <| IO.userError s!"Invalid recursor {ctor}"
     | _, _ => throw <| IO.userError s!"No such recursor {ctor}"
 
+/-- "Replay" some constants into an `Environment`, sending them to the kernel for checking. -/
+def replay (newConstants : HashMap Name ConstantInfo) (env : Environment) : IO Environment := do
+  let mut remaining : NameSet := ∅
+  for (n, ci) in newConstants.toList do
+    -- We skip unsafe constants, and also partial constants.
+    -- Later we may want to handle partial constants.
+    if !ci.isUnsafe && !ci.isPartial then
+      remaining := remaining.insert n
+  let (_, s) ← StateRefT'.run (s := { env, remaining }) do
+    ReaderT.run (r := { newConstants }) do
+      for n in remaining do
+        replayConstant n
+      checkPostponedConstructors
+      checkPostponedRecursors
+  return s.env
 
 unsafe def replayFromImports (module : Name) : IO Unit := do
   let mFile ← findOLean module
@@ -131,38 +154,16 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   let (_, s) ← importModulesCore mod.imports
     |>.run (s := { moduleNameSet := ({} : NameHashSet).insert module })
   let env ← finalizeImport s #[{module}] {} 0
-  let mut remaining := {}
   let mut newConstants := {}
   for name in mod.constNames, ci in mod.constants do
-    -- We skip unsafe constants, and also partial constants.
-    -- Later we may want to handle partial constants.
-    if !ci.isUnsafe && !ci.isPartial then
-      newConstants := newConstants.insert name ci
-      remaining := remaining.insert name
-  let (_, s) ← StateRefT'.run (s := { env, remaining }) do
-    ReaderT.run (r := { newConstants }) do
-      for n in mod.constNames do
-        replayConstant n
-      checkPostponedConstructors
-      checkPostponedRecursors
-  s.env.freeRegions
+    newConstants := newConstants.insert name ci
+  let env' ← replay newConstants env
+  env'.freeRegions
   region.free
 
 unsafe def replayFromFresh (module : Name) : IO Unit := do
   Lean.withImportModules #[{module}] {} 0 fun env => do
-    let fresh ← mkEmptyEnvironment
-    let mut remaining : NameSet := {}
-    for (n, ci) in env.constants.map₁.toList do
-      -- We skip unsafe constants, and also partial constants.
-      -- Later we may want to handle partial constants.
-      if !ci.isUnsafe && !ci.isPartial then
-        remaining := remaining.insert n
-    discard <| StateRefT'.run (s := { env := fresh, remaining }) do
-      ReaderT.run (r := { newConstants := env.constants.map₁ }) do
-        for n in remaining do
-          replayConstant n
-        checkPostponedConstructors
-        checkPostponedRecursors
+    discard <| replay env.constants.map₁ (← mkEmptyEnvironment)
 
 /--
 Run as e.g. `lake exe lean4checker` to check everything on the Lean search path,
