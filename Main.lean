@@ -59,7 +59,7 @@ and add it to the environment.
 partial def replayConstant (name : Name) : M Unit := do
   if ← isTodo name then
     let some ci := (← read).newConstants.find? name | unreachable!
-    replayConstants ci.getUsedConstants
+    replayConstants ci.getUsedConstantsAsSet
     -- Check that this name is still pending: a mutual block may have taken care of it.
     if (← get).pending.contains name then
       match ci with
@@ -84,7 +84,7 @@ partial def replayConstant (name : Name) : M Unit := do
         -- Make sure we are really finished with the constructors.
         for (_, ctors) in ctorInfo do
           for ctor in ctors do
-            replayConstants ctor.getUsedConstants
+            replayConstants ctor.getUsedConstantsAsSet
         let types : List InductiveType := ctorInfo.map fun ⟨ci, ctors⟩ =>
           { name := ci.name
             type := ci.type

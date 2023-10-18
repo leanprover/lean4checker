@@ -1,4 +1,6 @@
-import Lean
+import Lean4Checker.Tests.OpenPrivate
+
+open private mk from Lean.Environment
 
 open Lean in
 elab "add_false_constructor" : command => do
@@ -12,7 +14,9 @@ elab "add_false_constructor" : command => do
         numParams := 0
         numFields := 0
         isUnsafe := false }
-    { env with constants }
+    -- Before `Environment.mk` became private, we could just use
+    -- `{ env with constants }`
+    mk env.const2ModIdx constants env.extensions env.extraConstNames env.header
 
 add_false_constructor
 
