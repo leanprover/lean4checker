@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
+<<<<<<< HEAD
 lake build
+=======
+# Because `Lean4CheckerTests/ReduceBool.lean` is non-deterministic (compiles only 1/4 of the time),
+# we just keep rebuilding until it works!
+until lake build > /dev/null 2>&1; do :; done
+>>>>>>> 8a73e92 (Add a test case about overriding the prelude)
 
 check_command() {
     local cmd="$1"
@@ -37,5 +43,7 @@ check_command "lake exe lean4checker --fresh Lean4CheckerTests.UseFalseConstruct
 rm -f .lean4checker.tmp
 check_command "lake exe lean4checker Lean4CheckerTests.ReduceBool" "uncaught exception: (kernel) unknown declaration 'foo'"
 rm -f .lean4checker.tmp
+
+check_command "lake exe lean4checker Lean4CheckerTests.OverridenPrelude" "TODO"
 
 echo "All commands produced the expected errors."
