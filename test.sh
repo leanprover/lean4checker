@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 
-<<<<<<< HEAD
 lake build
-=======
-# Because `Lean4CheckerTests/ReduceBool.lean` is non-deterministic (compiles only 1/4 of the time),
-# we just keep rebuilding until it works!
-until lake build > /dev/null 2>&1; do :; done
->>>>>>> 8a73e92 (Add a test case about overriding the prelude)
 
 check_command() {
     local cmd="$1"
