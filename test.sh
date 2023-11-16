@@ -34,6 +34,10 @@ check_command "lake exe lean4checker Lean4Checker.Tests.AddFalseConstructor" "un
 
 check_command "lake exe lean4checker --fresh Lean4Checker.Tests.UseFalseConstructor" "uncaught exception: (kernel) unknown constant 'False.intro'"
 
+rm -f .lean4checker.tmp
+
 check_command "lake exe lean4checker Lean4Checker.Tests.ReduceBool" "uncaught exception: (kernel) unknown declaration 'foo'"
+
+rm -f .lean4checker.tmp
 
 echo "All commands produced the expected errors."
