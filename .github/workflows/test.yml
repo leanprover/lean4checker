@@ -6,6 +6,7 @@ name: continuous integration
 jobs:
   build:
     name: test
+    runs-on: ubuntu-latest
     steps:
       - name: install elan
         run: |
