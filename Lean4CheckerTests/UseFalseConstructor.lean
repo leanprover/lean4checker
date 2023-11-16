@@ -1,4 +1,4 @@
-import Lean4Checker.Tests.AddFalseConstructor
+import Lean4CheckerTests.AddFalseConstructor
 
 theorem useEvilConstructor : False :=
   False.intro

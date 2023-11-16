@@ -1,4 +1,4 @@
-import Lean4Checker.Tests.OpenPrivate
+import Lean4CheckerTests.OpenPrivate
 
 open private mk from Lean.Environment
 
