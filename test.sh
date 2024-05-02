@@ -2,19 +2,6 @@
 
 lake build
 
-trim() {
-    local var="$*"
-    # Remove all leading whitespace and newline characters
-    while [[ $var =~ ^[[:space:]] ]]; do
-        var="${var#?}"  # Remove the first character repeatedly if it's whitespace
-    done
-    # Remove all trailing whitespace and newline characters
-    while [[ $var =~ [[:space:]]$ ]]; do
-        var="${var%?}"  # Remove the last character repeatedly if it's whitespace
-    done
-    printf '%s' "$var"
-}
-
 check_command() {
     local cmd="$1"
     local expected="$2"
@@ -25,10 +12,6 @@ check_command() {
         echo "Error: The command '$cmd' succeeded but was expected to fail."
         exit 1
     fi
-
-    # Account for weird whitespace from lake
-    # https://leanprover.zulipchat.com/#narrow/stream/428973-nightly-testing/topic/Mathlib.20status.20updates/near/436249454
-    output=$(trim "$output")
 
     if [[ "$output" != "$expected" ]]; then
         echo "Error: The command '$cmd' did not produce the expected error."
