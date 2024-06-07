@@ -1,0 +1,15 @@
+name = "lean4checker"
+defaultTargets = ["Lean4Checker", "lean4checker", "Lean4CheckerTests"]
+
+[[lean_lib]]
+name = "Lean4Checker"
+globs = ["Lean4Checker.*"]
+
+[[lean_lib]]
+name = "Lean4CheckerTests"
+globs = ["Lean4CheckerTests.*"]
+
+[[lean_exe]]
+name = "lean4checker"
+root = "Main"
+supportInterpreter = true
