@@ -20,7 +20,7 @@ def ofList (names : List Name) : NameSet :=
 
 end NameSet
 
-def HashMap.keyNameSet (m : HashMap Name α) : NameSet :=
+def HashMap.keyNameSet (m : Std.HashMap Name α) : NameSet :=
   m.fold (fun s n _ => s.insert n) {}
 namespace Environment
 
