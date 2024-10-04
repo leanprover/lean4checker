@@ -38,4 +38,6 @@ rm -f .lean4checker.tmp
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReduceBool" "uncaught exception: (kernel) unknown declaration 'foo'"
 rm -f .lean4checker.tmp
 
+check_command "lake exe lean4checker Lean4CheckerTests.OverridenPrelude" "TODO"
+
 echo "All commands produced the expected errors."
