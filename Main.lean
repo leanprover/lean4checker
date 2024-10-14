@@ -96,6 +96,7 @@ unsafe def main (args : List String) : IO UInt32 := do
     for m in targetModules do
       if verbose then IO.println s!"starting {m}"
       tasks := tasks.push (m, ← IO.asTask (replayFromImports m))
+    IO.println s!"waiting for {tasks.size} tasks"
     for (m, t) in tasks do
       if verbose then IO.println s!"replaying {m}"
       if let .error e := t.get then
