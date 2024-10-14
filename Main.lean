@@ -53,9 +53,9 @@ starting with `Mathlib.Data.Nat`.
 This will replay all the new declarations from the target file into the `Environment`
 as it was at the beginning of the file, using the kernel to check them.
 
-You can also use `lake exe lean4checker --fresh Mathlib.Data.Nat.Basic` to replay all the constants
-(both imported and defined in that file) into a fresh environment,
-but this can only be used on a single file.
+You can also use `lake exe lean4checker --fresh Mathlib.Data.Nat.Prime.Basic`
+to replay all the constants (both imported and defined in that file) into a fresh environment.
+This can only be used on a single file.
 
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
@@ -73,14 +73,12 @@ unsafe def main (args : List String) : IO UInt32 := do
       else
         pure mod
   let mut targetModules := #[]
+  let sp ← searchPathRef.get
   for target in targets do
     let mut found := false
-    let sp ← searchPathRef.get
     for path in (← SearchPath.findAllWithExt sp "olean") do
       if let some m := (← searchModuleNameOfFileName path sp) then
-        IO.println s!"considering {m}"
         if target.isPrefixOf m then
-          IO.println s!"adding {m}"
           targetModules := targetModules.push m
           found := true
     if not found then
@@ -94,9 +92,7 @@ unsafe def main (args : List String) : IO UInt32 := do
   else
     let mut tasks := #[]
     for m in targetModules do
-      if verbose then IO.println s!"starting {m}"
       tasks := tasks.push (m, ← IO.asTask (replayFromImports m))
-    IO.println s!"waiting for {tasks.size} tasks"
     for (m, t) in tasks do
       if verbose then IO.println s!"replaying {m}"
       if let .error e := t.get then
