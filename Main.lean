@@ -77,7 +77,9 @@ unsafe def main (args : List String) : IO UInt32 := do
     let sp ← searchPathRef.get
     for path in (← SearchPath.findAllWithExt sp "olean") do
       if let some m := (← searchModuleNameOfFileName path sp) then
+        IO.println s!"considering {m}"
         if target.isPrefixOf m then
+          IO.println s!"adding {m}"
           targetModules := targetModules.push m
           found := true
     if not found then
