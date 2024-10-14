@@ -62,6 +62,7 @@ This is not an external verifier, simply a tool to detect "environment hacking".
 unsafe def main (args : List String) : IO UInt32 := do
   initSearchPath (← findSysroot)
   let (flags, args) := args.partition fun s => s.startsWith "-"
+  let verbose := "-v" ∈ flags || "--verbose" ∈ flags
   let targets ← do
     match args with
     | [] => pure [← getCurrentModule]
@@ -88,16 +89,15 @@ unsafe def main (args : List String) : IO UInt32 := do
     if targetModules.size != 1 then
       throw <| IO.userError "--fresh flag is only valid when specifying a single module"
     for m in targetModules do
-      if "-v" ∈ flags || "--verbose" ∈ flags then
-        IO.println s!"replaying {m} with --fresh"
+      if verbose then IO.println s!"replaying {m} with --fresh"
       replayFromFresh m
   else
     let mut tasks := #[]
     for m in targetModules do
+      if verbose then IO.println s!"starting {m}"
       tasks := tasks.push (m, ← IO.asTask (replayFromImports m))
     for (m, t) in tasks do
-      if "-v" ∈ flags || "--verbose" ∈ flags then
-        IO.println s!"replaying {m}"
+      if verbose then IO.println s!"replaying {m}"
       if let .error e := t.get then
         IO.eprintln s!"lean4checker found a problem in {m}"
         throw e
