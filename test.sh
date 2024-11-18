@@ -32,6 +32,14 @@ but it is expected to have type
 check_command "lake -q exe lean4checker Lean4CheckerTests.AddFalseConstructor" "lean4checker found a problem in Lean4CheckerTests.AddFalseConstructor
 uncaught exception: No such constructor False.intro"
 
+check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
+uncaught exception: application type mismatch
+  False.elim @propext
+argument has type
+  ∀ {a b : Prop}, (a ↔ b) → a = b
+but function has type
+  False → ∀ (x y z n : Nat), 0 < x → 0 < y → 0 < z → 2 < n → x ^ n + y ^ n ≠ z ^ n"
+
 check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.UseFalseConstructor" "uncaught exception: (kernel) unknown constant 'False.intro'"
 
 # The 'ReduceBool' test writes to a temporary file.
