@@ -46,7 +46,7 @@ check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.UseFalseConstr
 # We clean up before and afterwards for consistency, although neither should be required.
 rm -f .lean4checker.tmp
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReduceBool" "lean4checker found a problem in Lean4CheckerTests.ReduceBool
-uncaught exception: (kernel) unknown declaration 'foo'"
+uncaught exception: (kernel) (interpreter) unknown declaration 'foo'"
 rm -f .lean4checker.tmp
 
 echo "All commands produced the expected errors."
