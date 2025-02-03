@@ -1,8 +1,12 @@
 import Lean4CheckerTests.OpenPrivate
 
+open private Lean.Environment.mk from Lean.Environment
+open private Lean.Kernel.Environment.mk from Lean.Environment
+open private Lean.Kernel.Environment.extensions from Lean.Environment
+open private Lean.Kernel.Environment.extraConstNames from Lean.Environment
+
 /- Redefine `propext : False`. -/
 open Lean Elab Meta in
-open private Environment.mk from Lean.Environment in
 #eval modifyEnv (m := MetaM) fun env =>
   let consts :=
     { env.constants with
@@ -13,7 +17,14 @@ open private Environment.mk from Lean.Environment in
           isUnsafe := false
         })
     }
-  Lean.Environment.mk env.const2ModIdx consts env.extensions env.extraConstNames env.header
+  let kenv := Lean.Kernel.Environment.mk consts
+    env.toKernelEnv.quotInit
+    env.toKernelEnv.diagnostics
+    env.toKernelEnv.const2ModIdx
+    (Lean.Kernel.Environment.extensions env.toKernelEnv)
+    (Lean.Kernel.Environment.extraConstNames env.toKernelEnv)
+    env.header
+  Lean.Environment.mk kenv (.pure kenv) {} none
 
 theorem efsq : ∀ (x y z n : Nat),
     0 < x → 0 < y → 0 < z → 2 < n →
