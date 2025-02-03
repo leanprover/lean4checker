@@ -13,7 +13,7 @@ open private Environment.mk from Lean.Environment in
           isUnsafe := false
         })
     }
-  Environment.mk env.const2ModIdx consts env.extensions env.extraConstNames env.header
+  Lean.Environment.mk env.const2ModIdx consts env.extensions env.extraConstNames env.header
 
 theorem efsq : ∀ (x y z n : Nat),
     0 < x → 0 < y → 0 < z → 2 < n →
