@@ -24,7 +24,7 @@ open Lean Elab Meta in
     (Lean.Kernel.Environment.extensions env.toKernelEnv)
     (Lean.Kernel.Environment.extraConstNames env.toKernelEnv)
     env.header
-  Lean.Environment.mk kenv (.pure kenv) {} none
+  Lean.Environment.mk kenv (.pure kenv) default none none {}
 
 theorem efsq : ∀ (x y z n : Nat),
     0 < x → 0 < y → 0 < z → 2 < n →
