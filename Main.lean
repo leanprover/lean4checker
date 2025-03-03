@@ -6,6 +6,7 @@ Authors: Scott Morrison
 import Lean.CoreM
 import Lean.Replay
 import Lean4Checker.Lean
+import Lean4Checker.Replay
 import Lake.Load.Manifest
 
 open Lean
@@ -21,13 +22,13 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   let mut newConstants := {}
   for name in mod.constNames, ci in mod.constants do
     newConstants := newConstants.insert name ci
-  let env' ← env.replay newConstants
+  let env' ← env.replay' newConstants
   env'.freeRegions
   region.free
 
 unsafe def replayFromFresh (module : Name) : IO Unit := do
   Lean.withImportModules #[{module}] {} 0 fun env => do
-    discard <| (← mkEmptyEnvironment).replay env.constants.map₁
+    discard <| (← mkEmptyEnvironment).replay' env.constants.map₁
 
 /-- Read the name of the main module from the `lake-manifest`. -/
 -- This has been copied from `ImportGraph.getCurrentModule` in the
