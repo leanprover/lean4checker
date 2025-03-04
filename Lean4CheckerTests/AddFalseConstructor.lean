@@ -26,7 +26,7 @@ elab "add_false_constructor" : command => do
       (Lean.Kernel.Environment.extensions env.toKernelEnv)
       (Lean.Kernel.Environment.extraConstNames env.toKernelEnv)
       env.header
-    Lean.Environment.mk kenv (.pure kenv) {} none
+    Lean.Environment.mk kenv (.pure kenv) default none none {}
 
 add_false_constructor
 

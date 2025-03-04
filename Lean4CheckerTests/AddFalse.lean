@@ -4,6 +4,7 @@ open private Lean.Environment.mk from Lean.Environment
 open private Lean.Kernel.Environment.mk from Lean.Environment
 open private Lean.Kernel.Environment.extensions from Lean.Environment
 open private Lean.Kernel.Environment.extraConstNames from Lean.Environment
+open private Lean.AsyncConsts from Lean.Environment
 
 open Lean in
 elab "add_false" : command => do
@@ -19,7 +20,7 @@ elab "add_false" : command => do
       (Lean.Kernel.Environment.extensions env.toKernelEnv)
       (Lean.Kernel.Environment.extraConstNames env.toKernelEnv)
       env.header
-    Lean.Environment.mk kenv (.pure kenv) {} none
+    Lean.Environment.mk kenv (.pure kenv) default none none {}
 
 add_false
 
