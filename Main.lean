@@ -60,6 +60,9 @@ This can only be used on a single file.
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
 unsafe def main (args : List String) : IO UInt32 := do
+  -- Contributor's note: lean4lean is intended to have a CLI interface matching lean4checker,
+  -- so if you want to make a change here please either make a sibling PR to
+  -- https://github.com/digama0/lean4lean or ping @digama0 (Mario Carneiro) to go fix it.
   initSearchPath (← findSysroot)
   let (flags, args) := args.partition fun s => s.startsWith "-"
   let verbose := "-v" ∈ flags || "--verbose" ∈ flags
