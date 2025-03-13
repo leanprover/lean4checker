@@ -25,4 +25,4 @@ elab "add_false" : command => do
 add_false
 
 example : False :=
-   false
+  false
