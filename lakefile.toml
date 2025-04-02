@@ -1,6 +1,6 @@
 name = "lean4checker"
 defaultTargets = ["Lean4Checker", "lean4checker", "Lean4CheckerTests"]
-testDriver = "lean4checker-test"
+testDriver = "lean4checker_test"
 
 [[lean_lib]]
 name = "Lean4Checker"
@@ -16,5 +16,5 @@ root = "Main"
 supportInterpreter = true
 
 [[lean_exe]]
-name = "lean4checker-test"
+name = "lean4checker_test"
 root = "Lean4CheckerTests.TestDriver"
