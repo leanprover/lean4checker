@@ -45,7 +45,7 @@ check_command "lake -q exe lean4checker Lean4CheckerTests.AddFalseConstructor" "
 uncaught exception: No such constructor False.intro"
 
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
-uncaught exception: application type mismatch
+uncaught exception: (kernel) application type mismatch
   False.elim @propext
 argument has type
   ∀ {a b : Prop}, (a ↔ b) → a = b
