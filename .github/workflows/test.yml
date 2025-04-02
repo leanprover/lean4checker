@@ -20,4 +20,4 @@ jobs:
 
       - name: test
         run: |
-          ./test.sh
+          lake test
