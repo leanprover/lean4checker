@@ -45,12 +45,14 @@ check_command "lake -q exe lean4checker Lean4CheckerTests.AddFalseConstructor" "
 uncaught exception: No such constructor False.intro"
 
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
-uncaught exception: application type mismatch
+uncaught exception: (kernel) application type mismatch
   False.elim @propext
 argument has type
-  ∀ {a b : Prop}, (a ↔ b) → a = b
+  ∀ {a b : Prop}, Iff a b → Eq a b
 but function has type
-  False → ∀ (x y z n : Nat), 0 < x → 0 < y → 0 < z → 2 < n → x ^ n + y ^ n ≠ z ^ n"
+  False →
+    ∀ (x y z n : Nat),
+      LT.lt 0 x → LT.lt 0 y → LT.lt 0 z → LT.lt 2 n → Ne (HAdd.hAdd (HPow.hPow x n) (HPow.hPow y n)) (HPow.hPow z n)"
 
 # The 'ReduceBool' test writes to a temporary file.
 # We clean up before and afterwards for consistency, although neither should be required.

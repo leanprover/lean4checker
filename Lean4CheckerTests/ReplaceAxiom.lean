@@ -1,9 +1,8 @@
 import Lean4CheckerTests.OpenPrivate
 
-open private Lean.Environment.mk from Lean.Environment
+open private Lean.Environment.setCheckedSync from Lean.Environment
 open private Lean.Kernel.Environment.mk from Lean.Environment
 open private Lean.Kernel.Environment.extensions from Lean.Environment
-open private Lean.Kernel.Environment.extraConstNames from Lean.Environment
 
 /- Redefine `propext : False`. -/
 open Lean Elab Meta in
@@ -22,9 +21,9 @@ open Lean Elab Meta in
     env.toKernelEnv.diagnostics
     env.toKernelEnv.const2ModIdx
     (Lean.Kernel.Environment.extensions env.toKernelEnv)
-    (Lean.Kernel.Environment.extraConstNames env.toKernelEnv)
+    {}
     env.header
-  Lean.Environment.mk kenv (.pure kenv) default none none {}
+  Lean.Environment.setCheckedSync env kenv
 
 theorem efsq : ∀ (x y z n : Nat),
     0 < x → 0 < y → 0 < z → 2 < n →
