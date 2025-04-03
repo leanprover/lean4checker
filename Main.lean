@@ -18,7 +18,7 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   let (mod, region) ← readModuleData mFile
   let (_, s) ← importModulesCore mod.imports
     |>.run (s := { moduleNameSet := ({} : NameHashSet).insert module })
-  let env ← finalizeImport s #[{module}] {} 0
+  let env ← finalizeImport s #[{module}] {} 0 false false
   let mut newConstants := {}
   for name in mod.constNames, ci in mod.constants do
     newConstants := newConstants.insert name ci
@@ -27,7 +27,7 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   region.free
 
 unsafe def replayFromFresh (module : Name) : IO Unit := do
-  Lean.withImportModules #[{module}] {} 0 fun env => do
+  Lean.withImportModules #[{module}] {} fun env => do
     discard <| (← mkEmptyEnvironment).replay' env.constants.map₁
 
 /-- Read the name of the main module from the `lake-manifest`. -/
