@@ -63,4 +63,6 @@ rm -f .lean4checker.tmp || true
 
 check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.UseFalseConstructor" "uncaught exception: (kernel) unknown constant 'False.intro'"
 
+check_command "lake exe lean4checker Lean4CheckerTests.OverridenPrelude" "TODO"
+
 echo "All commands produced the expected errors."
