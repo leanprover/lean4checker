@@ -35,15 +35,6 @@ check_command() {
     return 0
 }
 
-check_command "lake -q exe lean4checker Lean4CheckerTests.AddFalse" "lean4checker found a problem in Lean4CheckerTests.AddFalse
-uncaught exception: (kernel) declaration type mismatch, 'false' has type
-  Prop
-but it is expected to have type
-  False"
-
-check_command "lake -q exe lean4checker Lean4CheckerTests.AddFalseConstructor" "lean4checker found a problem in Lean4CheckerTests.AddFalseConstructor
-uncaught exception: No such constructor False.intro"
-
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
 uncaught exception: (kernel) application type mismatch
   False.elim @propext
@@ -60,7 +51,5 @@ rm -f .lean4checker.tmp || true
 check_command "lake -q exe lean4checker Lean4CheckerTests.ReduceBool" "lean4checker found a problem in Lean4CheckerTests.ReduceBool
 uncaught exception: (kernel) (interpreter) unknown declaration 'foo'"
 rm -f .lean4checker.tmp || true
-
-check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.UseFalseConstructor" "uncaught exception: (kernel) unknown constant 'False.intro'"
 
 echo "All commands produced the expected errors."

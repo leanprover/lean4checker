@@ -1,5 +1,7 @@
 import Lean4CheckerTests.OpenPrivate
 
+set_option Elab.async false
+
 open private Lean.Kernel.Environment.add from Lean.Environment
 open private Lean.Environment.setCheckedSync from Lean.Environment
 
