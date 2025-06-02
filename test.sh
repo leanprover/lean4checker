@@ -43,7 +43,10 @@ argument has type
 but function has type
   False →
     ∀ (x y z n : Nat),
-      LT.lt 0 x → LT.lt 0 y → LT.lt 0 z → LT.lt 2 n → Ne (HAdd.hAdd (HPow.hPow x n) (HPow.hPow y n)) (HPow.hPow z n)"
+      instLTNat.lt 0 x →
+        instLTNat.lt 0 y →
+          instLTNat.lt 0 z →
+            instLTNat.lt 2 n → Ne (instHAdd.hAdd (instHPow.hPow x n) (instHPow.hPow y n)) (instHPow.hPow z n)"
 
 # The 'ReduceBool' test writes to a temporary file.
 # We clean up before and afterwards for consistency, although neither should be required.
