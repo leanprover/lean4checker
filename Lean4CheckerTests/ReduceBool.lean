@@ -17,6 +17,12 @@ def foo : Bool :=
   match exists_or_touch t () with
   | .ok b _ => b
   | _ => false
-theorem T1 : true = Lean.reduceBool foo := rfl
+
+/--
+Adaptation note: after https://github.com/leanprover/lean4/pull/8419
+this exploit requires that we write `by rfl` instead of `rfl` here.
+What is going on!?
+-/
+theorem T1 : true = Lean.reduceBool foo := by rfl
 theorem T2 : Lean.reduceBool foo = false := rfl
 theorem contradiction : False := nomatch T1.trans T2
