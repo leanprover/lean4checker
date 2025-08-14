@@ -14,13 +14,6 @@ These could be moved to the Lean repository.
 
 namespace Lean
 
-namespace NameSet
-
-def ofList (names : List Name) : NameSet :=
-  names.foldl (fun s n => s.insert n) {}
-
-end NameSet
-
 def HashMap.keyNameSet (m : Std.HashMap Name α) : NameSet :=
   m.fold (fun s n _ => s.insert n) {}
 namespace Environment
