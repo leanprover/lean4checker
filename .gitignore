@@ -7,3 +7,5 @@
 /lakefile.olean
 # After v4.3.0-rc2 lake stores its files here:
 /.lake/
+# This file is created by the 'ReduceBool' test.
+/.lean4checker.tmp
