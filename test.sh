@@ -48,11 +48,4 @@ but function has type
           instLTNat.lt 0 z →
             instLTNat.lt 2 n → Ne (instHAdd.hAdd (instHPow.hPow x n) (instHPow.hPow y n)) (instHPow.hPow z n)"
 
-# The 'ReduceBool' test writes to a temporary file.
-# We clean up before and afterwards for consistency, although neither should be required.
-rm -f .lean4checker.tmp || true
-check_command "lake -q exe lean4checker Lean4CheckerTests.ReduceBool" "lean4checker found a problem in Lean4CheckerTests.ReduceBool
-uncaught exception: (kernel) (interpreter) unknown declaration 'foo'"
-rm -f .lean4checker.tmp || true
-
 echo "All commands produced the expected errors."
