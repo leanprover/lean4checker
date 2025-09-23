@@ -48,6 +48,7 @@ but function has type
           instLTNat.lt 0 z →
             instLTNat.lt 2 n → Ne (instHAdd.hAdd (instHPow.hPow x n) (instHPow.hPow y n)) (instHPow.hPow z n)"
 
-check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.PrivateConflictC" ""
+check_command "lake -q exe lean4checker --fresh Lean4CheckerTests.PrivateConflictC" \
+  "uncaught exception: import Lean4CheckerTests.PrivateConflictB failed, environment already contains 'foo' from Lean4CheckerTests.PrivateConflictA"
 
 echo "All commands produced the expected errors."
