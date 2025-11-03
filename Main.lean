@@ -24,12 +24,13 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
     if (← pFile.pathExists) then
       fnames := fnames.push pFile
   let parts ← readModuleDataParts fnames
-  let some (mod, _) := parts[0]? | throw <| IO.userError "failed to read module data"
+  if h : parts.size = 0 then throw <| IO.userError "failed to read module data" else
+  let (mod, _) := parts[0]
   let (_, s) ← importModulesCore mod.imports |>.run
   let env ← finalizeImport s mod.imports {} 0 false false (isModule := true)
   let mut newConstants := {}
   -- Collect constants from last ("most private") part, which subsumes all prior ones
-  for name in partMod.constNames, ci in parts[parts.size-1].constants do
+  for name in parts[parts.size-1].1.constNames, ci in parts[parts.size-1].1.constants do
     newConstants := newConstants.insert name ci
   let env' ← env.replay' newConstants
   env'.freeRegions
