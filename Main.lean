@@ -15,15 +15,26 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   let mFile ← findOLean module
   unless (← mFile.pathExists) do
     throw <| IO.userError s!"object file '{mFile}' of module {module} does not exist"
-  let (mod, region) ← readModuleData mFile
+  -- Load all module data parts (exported, server, private)
+  let mut fnames := #[mFile]
+  let sFile := OLeanLevel.server.adjustFileName mFile
+  if (← sFile.pathExists) then
+    fnames := fnames.push sFile
+    let pFile := OLeanLevel.private.adjustFileName mFile
+    if (← pFile.pathExists) then
+      fnames := fnames.push pFile
+  let parts ← readModuleDataParts fnames
+  let some (mod, _) := parts[0]? | throw <| IO.userError "failed to read module data"
   let (_, s) ← importModulesCore mod.imports |>.run
-  let env ← finalizeImport s #[{module}] {} 0 false false
+  let env ← finalizeImport s mod.imports {} 0 false false (isModule := true)
   let mut newConstants := {}
-  for name in mod.constNames, ci in mod.constants do
-    newConstants := newConstants.insert name ci
+  -- Collect constants from all parts, avoiding duplicates
+  for (partMod, _) in parts do
+    for name in partMod.constNames, ci in partMod.constants do
+      if !newConstants.contains name then
+        newConstants := newConstants.insert name ci
   let env' ← env.replay' newConstants
   env'.freeRegions
-  region.free
 
 unsafe def replayFromFresh (module : Name) : IO Unit := do
   Lean.withImportModules #[{module}] {} fun env => do
