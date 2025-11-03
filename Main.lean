@@ -28,11 +28,9 @@ unsafe def replayFromImports (module : Name) : IO Unit := do
   let (_, s) ← importModulesCore mod.imports |>.run
   let env ← finalizeImport s mod.imports {} 0 false false (isModule := true)
   let mut newConstants := {}
-  -- Collect constants from all parts, avoiding duplicates
-  for (partMod, _) in parts do
-    for name in partMod.constNames, ci in partMod.constants do
-      if !newConstants.contains name then
-        newConstants := newConstants.insert name ci
+  -- Collect constants from last ("most private") part, which subsumes all prior ones
+  for name in partMod.constNames, ci in parts[parts.size-1].constants do
+    newConstants := newConstants.insert name ci
   let env' ← env.replay' newConstants
   env'.freeRegions
 
