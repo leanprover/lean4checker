@@ -35,7 +35,9 @@ check_command() {
     return 0
 }
 
-check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
+check_command "lake -q exe lean4checker Lean4CheckerTests.ReplaceAxiom" "Searching for modules matching: [Lean4CheckerTests.ReplaceAxiom]
+Found 1 modules to check
+lean4checker found a problem in Lean4CheckerTests.ReplaceAxiom
 uncaught exception: (kernel) application type mismatch
   False.elim @propext
 argument has type
