@@ -9,6 +9,8 @@ globs = ["Lean4Checker.*"]
 [[lean_lib]]
 name = "Lean4CheckerTests"
 globs = ["Lean4CheckerTests.*"]
+leanOptions = { experimental.module = true }
+
 
 [[lean_exe]]
 name = "lean4checker"
