@@ -50,4 +50,6 @@ but function has type
           instLTNat.lt 0 z →
             instLTNat.lt 2 n → Ne (instHAdd.hAdd (instHPow.hPow x n) (instHPow.hPow y n)) (instHPow.hPow z n)"
 
+check_command "lake exe lean4checker Lean4CheckerTests.OverridenPrelude" "TODO"
+
 echo "All commands produced the expected errors."
