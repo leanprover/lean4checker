@@ -1,0 +1,2 @@
+lean4checker found a problem in Lean4CheckerTests.AddFalseConstructor
+uncaught exception: No such constructor False.intro
