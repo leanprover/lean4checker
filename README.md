@@ -43,3 +43,4 @@ and correctly rejects test cases with known problems.
 To add a new test case:
 1. Create a `.lean` file in `Lean4CheckerTests/` that produces an invalid environment
 2. Create a matching `.expected.out` file with the expected error output
+3. For tests requiring `--fresh` mode, use `.fresh.expected.out` instead
