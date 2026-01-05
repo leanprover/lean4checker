@@ -10,9 +10,15 @@ def runLean4Checker (module : String) : IO (UInt32 × String) := do
     args := #["-q", "exe", "lean4checker", module]
   }
   let combined := output.stdout ++ output.stderr
-  return (output.exitCode, combined.trimRight)
+  return (output.exitCode, combined.trimAsciiEnd.toString)
 
 def main : IO UInt32 := do
+  IO.println "Building..."
+  let buildResult ← IO.Process.output { cmd := "lake", args := #["build"] }
+  if buildResult.exitCode != 0 then
+    IO.eprintln s!"Build failed:\n{buildResult.stderr}"
+    return 1
+
   IO.println "Running lean4checker on itself..."
   let (exitCode, output) ← runLean4Checker "Lean4Checker"
   if exitCode != 0 then
@@ -26,7 +32,7 @@ def main : IO UInt32 := do
 
   let mut failed := false
   for entry in expectedFiles do
-    let base := entry.fileName.dropRight ".expected.out".length
+    let base := entry.fileName.dropEnd ".expected.out".length |>.toString
     let module := s!"Lean4CheckerTests.{base}"
     IO.println s!"Checking {module}..."
 
@@ -38,10 +44,10 @@ def main : IO UInt32 := do
       failed := true
       continue
 
-    if output != expected.trimRight then
+    if output != expected.trimAsciiEnd.toString then
       IO.eprintln s!"Error: Output mismatch for {module}"
       IO.eprintln "Expected:"
-      IO.eprintln expected.trimRight
+      IO.eprintln expected.trimAsciiEnd.toString
       IO.eprintln "Got:"
       IO.eprintln output
       failed := true

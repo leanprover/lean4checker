@@ -86,6 +86,18 @@ partial def replayConstant (name : Name) : M Unit := do
       | .defnInfo   info =>
         addDecl (Declaration.defnDecl   info)
       | .thmInfo    info =>
+        -- Ignore duplicate theorems. This code is identical to that in `finalizeImport` before it
+        -- added extended duplicates support for the module system, which is not relevant for us
+        -- here as we always load all .olean information. We need this case *because* of the module
+        -- system -- as we have more data loaded than it, we might encounter duplicate private
+        -- theorems where elaboration under the module system would have only one of them in scope.
+        if let some (.thmInfo info') := (← get).env.find? ci.name then
+          if info.name == info'.name &&
+            info.type == info'.type &&
+            info.levelParams == info'.levelParams &&
+            info.all == info'.all
+          then
+            return
         addDecl (Declaration.thmDecl    info)
       | .axiomInfo  info =>
         addDecl (Declaration.axiomDecl  info)
@@ -119,6 +131,9 @@ partial def replayConstant (name : Name) : M Unit := do
       | .recInfo info =>
         modify fun s => { s with postponedRecursors := s.postponedRecursors.insert info.name }
       | .quotInfo _ =>
+        -- `Quot.lift` and `Quot.ind` have types that reference `Eq`,
+        -- so we need to ensure `Eq` is replayed before adding the quotient declaration.
+        replayConstant `Eq
         addDecl (Declaration.quotDecl)
       modify fun s => { s with pending := s.pending.erase name }
 
