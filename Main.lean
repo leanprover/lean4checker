@@ -54,8 +54,10 @@ def getCurrentModule : IO Name := do
     -- `← getRootPackage` from `Lake`, but I can't make that work with the monads involved.
     return manifest.name.capitalize
 
-/-- Default number of worker tasks for parallel checking. -/
-def defaultNumWorkers : Nat := 32
+/-- Default number of worker tasks for parallel checking.
+We use a conservative default to avoid OOM on machines with 32GB RAM when checking
+large projects like Mathlib, where each worker loads a near-complete environment. -/
+def defaultNumWorkers : Nat := 8
 
 /-- Parse `--num-workers=N` flag, returning the number of workers. -/
 def parseNumWorkers (flags : List String) : IO Nat := do
@@ -79,7 +81,7 @@ You can also use `lake exe lean4checker --fresh Mathlib.Data.Nat.Prime.Basic`
 to replay all the constants (both imported and defined in that file) into a fresh environment.
 This can only be used on a single file.
 
-Use `--num-workers=N` to control parallelism (default: 32).
+Use `--num-workers=N` to control parallelism (default: 8).
 
 This is not an external verifier, simply a tool to detect "environment hacking".
 -/
