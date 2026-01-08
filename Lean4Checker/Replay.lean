@@ -131,6 +131,9 @@ partial def replayConstant (name : Name) : M Unit := do
       | .recInfo info =>
         modify fun s => { s with postponedRecursors := s.postponedRecursors.insert info.name }
       | .quotInfo _ =>
+        -- `Quot.lift` and `Quot.ind` have types that reference `Eq`,
+        -- so we need to ensure `Eq` is replayed before adding the quotient declaration.
+        replayConstant `Eq
         addDecl (Declaration.quotDecl)
       modify fun s => { s with pending := s.pending.erase name }
 
