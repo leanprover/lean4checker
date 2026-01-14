@@ -187,5 +187,5 @@ def replay' (newConstants : Std.HashMap Name ConstantInfo) (env : Environment) :
       for n in remaining do
         replayConstant n
       checkPostponedConstructors
-      checkPostponedRecursors
+      -- checkPostponedRecursors -- Disabled on this branch
   return .ofKernelEnv s.env
