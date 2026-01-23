@@ -34,3 +34,13 @@ Despite `.olean` files being "fairly cross-platform",
 `lean4checker` will reject `.olean`s that were compiled on a system
 that  does not use the same bignum library as your system,
 so it advisable to not rely on cached `.olean`s.
+
+## Testing
+
+Run `lake test` to run the test suite. This checks that `lean4checker` accepts its own codebase
+and correctly rejects test cases with known problems.
+
+To add a new test case:
+1. Create a `.lean` file in `Lean4CheckerTests/` that produces an invalid environment
+2. Create a matching `.expected.out` file with the expected error output
+3. For tests requiring `--fresh` mode, use `.fresh.expected.out` instead

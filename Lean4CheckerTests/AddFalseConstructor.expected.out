@@ -1,0 +1,4 @@
+Searching for modules matching: [Lean4CheckerTests.AddFalseConstructor]
+Found 1 modules to check
+lean4checker found a problem in Lean4CheckerTests.AddFalseConstructor
+uncaught exception: No such constructor False.intro
