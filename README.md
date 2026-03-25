@@ -1,4 +1,34 @@
-# Recheck a compiled Lean `olean` file using the Lean kernel.
+# ⚠️ Deprecated: lean4checker is now built into Lean
+
+**This repository is deprecated and will be archived.**
+
+`lean4checker` has been merged into the Lean 4 repository itself, and is now distributed as
+`leanchecker` with every Lean toolchain (starting from v4.28.0). You no longer need this
+separate repository.
+
+## Using the built-in `leanchecker`
+
+To check your project's `.olean` files using the built-in checker, run:
+```
+lake env leanchecker
+```
+or to check a single module:
+```
+lake env leanchecker Mathlib.Data.Nat.Basic
+```
+or to replay all constants into a fresh environment:
+```
+lake env leanchecker --fresh Mathlib
+```
+
+Because `leanchecker` is part of the toolchain, `lake env` will find it automatically —
+no need to build or point to a separate binary.
+
+---
+
+## Original README
+
+Recheck a compiled Lean `olean` file using the Lean kernel.
 
 `lake exe lean4checker <module>` will replay the environment in `<module>`,
 starting from the environment provided by its imports,
@@ -14,33 +44,3 @@ This is single threaded, and may be much slower.
 This is not an external verifier, as it uses the Lean kernel itself.
 However it is useful as a tool to detect "environment hacking",
 i.e. using metaprogramming facilities to build an inconsistent Lean `Environment`.
-
-## Usage
-
-To run this in another Lean project, use:
-```
-lake env path/to/lean4checker
-```
-or
-```
-lake env path/to/lean4checker Mathlib.Data.Nat.Basic
-```
-to check a single file.
-
-
-## Caveats
-
-Despite `.olean` files being "fairly cross-platform",
-`lean4checker` will reject `.olean`s that were compiled on a system
-that  does not use the same bignum library as your system,
-so it advisable to not rely on cached `.olean`s.
-
-## Testing
-
-Run `lake test` to run the test suite. This checks that `lean4checker` accepts its own codebase
-and correctly rejects test cases with known problems.
-
-To add a new test case:
-1. Create a `.lean` file in `Lean4CheckerTests/` that produces an invalid environment
-2. Create a matching `.expected.out` file with the expected error output
-3. For tests requiring `--fresh` mode, use `.fresh.expected.out` instead
